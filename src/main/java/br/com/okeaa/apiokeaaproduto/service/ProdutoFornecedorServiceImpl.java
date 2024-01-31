@@ -1,11 +1,11 @@
 package br.com.okeaa.apiokeaaproduto.service;
 
-import br.com.okeaa.apiokeaaproduto.controllers.request.produtofornecedor.JsonRequest;
-import br.com.okeaa.apiokeaaproduto.controllers.response.produtofornecedor.JsonResponse;
-import br.com.okeaa.apiokeaaproduto.exceptions.produtofornecedor.ApiProdutoFornecedorException;
-import br.com.okeaa.apiokeaaproduto.repositories.produtofornecedor.ProdutoFornecedorResponseRepository;
-import br.com.okeaa.apiokeaaproduto.repositories.produtofornecedor.ProdutoFornecedoresResponseRepository;
-import br.com.okeaa.apiokeaaproduto.service.produtofornecedor.ProdutoFornecedorService;
+import br.com.okeaa.apiokeaaproduto.controllers.request.produtoFornecedor.JsonRequest;
+import br.com.okeaa.apiokeaaproduto.controllers.response.produtoFornecedor.JsonResponse;
+import br.com.okeaa.apiokeaaproduto.exceptions.produtoFornecedor.ApiProdutoFornecedorException;
+import br.com.okeaa.apiokeaaproduto.repositories.produtoFornecedor.ProdutoFornecedorResponseRepository;
+import br.com.okeaa.apiokeaaproduto.repositories.produtoFornecedor.ProdutoFornecedoresResponseRepository;
+import br.com.okeaa.apiokeaaproduto.service.produtoFornecedor.ProdutoFornecedorService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;

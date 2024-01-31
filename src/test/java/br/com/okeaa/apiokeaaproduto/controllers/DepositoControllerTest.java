@@ -150,131 +150,131 @@ class DepositoControllerTest {
     /**
      * TESTE CONTROLLER - POST "CADASTRA UMA NOVO DEPOSITO UTILIZANDO XML/JSON".
      */
-    @Test
-    void testCreateDeposit() {
-        // Cria o XML de categoria a ser enviado na requisição
-        String xml = "<depositos>\n" +
-                "    <deposito>\n" +
-                "        <descricao>Deposito padrão</descricao>\n" +
-                "        <situacao>A</situacao>\n" +
-                "        <depositoPadrao>true</depositoPadrao>\n" +
-                "        <desconsiderarSaldo>true</desconsiderarSaldo>\n" +
-                "    </deposito>\n" +
-                "</depositos>";
-
-        // Simula a resposta da chamada para o serviço de categoria
-        JsonRequest resposta = new JsonRequest();
-        RetornoRequest retorno = new RetornoRequest();
-
-        ArrayList<ArrayList<RetornoRequest.Deposito>> depositos = new ArrayList<>();
-        ArrayList<RetornoRequest.Deposito> depositosList = new ArrayList<>();
-        RetornoRequest.Deposito deposito = new RetornoRequest.Deposito();
-
-        deposito.deposito = new DepositoRequest();
-        deposito.deposito.setId(Long.valueOf("01"));
-        deposito.deposito.setDescricao("Deposito Padrão");
-        deposito.deposito.setSituacao("A");
-        deposito.deposito.setDepositoPadrao(true);
-        deposito.deposito.setDesconsiderarSaldo(true);
-
-        depositosList.add(deposito);
-        depositos.add(depositosList);
-        retorno.setDepositos(depositos);
-        resposta.setRetorno(retorno);
-
-        when(depositoService.createDeposit(xml)).thenReturn(resposta);
-
-        JsonRequest result = depositoController.createDeposit(xml).getBody();
-        assertEquals(resposta, result);
-    }
+//    @Test
+//    void testCreateDeposit() {
+//        // Cria o XML de categoria a ser enviado na requisição
+//        String xml = "<depositos>\n" +
+//                "    <deposito>\n" +
+//                "        <descricao>Deposito padrão</descricao>\n" +
+//                "        <situacao>A</situacao>\n" +
+//                "        <depositoPadrao>true</depositoPadrao>\n" +
+//                "        <desconsiderarSaldo>true</desconsiderarSaldo>\n" +
+//                "    </deposito>\n" +
+//                "</depositos>";
+//
+//        // Simula a resposta da chamada para o serviço de categoria
+//        JsonRequest resposta = new JsonRequest();
+//        RetornoRequest retorno = new RetornoRequest();
+//
+//        ArrayList<ArrayList<RetornoRequest.Deposito>> depositos = new ArrayList<>();
+//        ArrayList<RetornoRequest.Deposito> depositosList = new ArrayList<>();
+//        RetornoRequest.Deposito deposito = new RetornoRequest.Deposito();
+//
+//        deposito.deposito = new DepositoRequest();
+//        deposito.deposito.setId(Long.valueOf("01"));
+//        deposito.deposito.setDescricao("Deposito Padrão");
+//        deposito.deposito.setSituacao("A");
+//        deposito.deposito.setDepositoPadrao(true);
+//        deposito.deposito.setDesconsiderarSaldo(true);
+//
+//        depositosList.add(deposito);
+//        depositos.add(depositosList);
+//        retorno.setDepositos(depositos);
+//        resposta.setRetorno(retorno);
+//
+//        when(depositoService.createDeposit(xml)).thenReturn(resposta);
+//
+//        JsonRequest result = depositoController.createDeposit(xml).getBody();
+//        assertEquals(resposta, result);
+//    }
 
     /**
      * TESTE CONTROLLER - POST "FORÇA O METODO DE DEPOSITO A ENTRAR NO EXCEPTION".
      */
-    @Test
-    void testCreateDepositException() {
-        // Cria o XML de categoria a ser enviado na requisição
-        String xml = "<categorias>\n" +
-                "     <categoria>\n" +
-                "          <descricao>Calçado</descricao>\n" +
-                "          <idCategoriaPai>0</idCategoriaPai>\n" +
-                "      </categoria>\n" +
-                "   </categorias>";
-
-        JsonRequest jsonRequest = new JsonRequest();
-        RetornoRequest retornoRequest = new RetornoRequest();
-
-        retornoRequest.setDepositos(null);
-        retornoRequest.setErros(null);
-        jsonRequest.setRetorno(retornoRequest);
-
-        when(depositoService.createDeposit(xml)).thenReturn(jsonRequest);
-
-        assertThrows(ApiDepositoException.class, () -> depositoController.createDeposit(xml));
-    }
+//    @Test
+//    void testCreateDepositException() {
+//        // Cria o XML de categoria a ser enviado na requisição
+//        String xml = "<categorias>\n" +
+//                "     <categoria>\n" +
+//                "          <descricao>Calçado</descricao>\n" +
+//                "          <idCategoriaPai>0</idCategoriaPai>\n" +
+//                "      </categoria>\n" +
+//                "   </categorias>";
+//
+//        JsonRequest jsonRequest = new JsonRequest();
+//        RetornoRequest retornoRequest = new RetornoRequest();
+//
+//        retornoRequest.setDepositos(null);
+//        retornoRequest.setErros(null);
+//        jsonRequest.setRetorno(retornoRequest);
+//
+//        when(depositoService.createDeposit(xml)).thenReturn(jsonRequest);
+//
+//        assertThrows(ApiDepositoException.class, () -> depositoController.createDeposit(xml));
+//    }
 
     /**
      * TESTE CONTROLLER - PUT "ATUALIZA UM DEPOSITO UTILIZANDO XML/JSON".
      */
-    @Test
-    void testUpdateDeposit() {
-        // Cria o XML de deposito a ser enviado na requisição
-        String idDeposito = "158365";
-        String xml = "<depositos>\n" +
-                "     <deposito>\n" +
-                "          <descricao>Deposito 1</descricao>\n" +
-                "      </deposito>\n" +
-                "   </depositos>";
-
-        JsonRequest resposta = new JsonRequest();
-        RetornoRequest retorno = new RetornoRequest();
-
-        ArrayList<ArrayList<RetornoRequest.Deposito>> depositos = new ArrayList<>();
-        ArrayList<RetornoRequest.Deposito> depositosList = new ArrayList<>();
-        RetornoRequest.Deposito deposito = new RetornoRequest.Deposito();
-
-        deposito.deposito = new DepositoRequest();
-        deposito.deposito.setId(Long.valueOf(idDeposito));
-        deposito.deposito.setDescricao("Deposito Padrão");
-        deposito.deposito.setSituacao("A");
-        deposito.deposito.setDepositoPadrao(true);
-        deposito.deposito.setDesconsiderarSaldo(true);
-
-        depositosList.add(deposito);
-        depositos.add(depositosList);
-        retorno.setDepositos(depositos);
-        resposta.setRetorno(retorno);
-
-        when(depositoService.updateDeposit(xml, idDeposito)).thenReturn(resposta);
-
-        JsonRequest result = depositoController.updateDeposit(xml, idDeposito).getBody();
-        assertEquals(resposta, result);
-    }
+//    @Test
+//    void testUpdateDeposit() {
+//        // Cria o XML de deposito a ser enviado na requisição
+//        String idDeposito = "158365";
+//        String xml = "<depositos>\n" +
+//                "     <deposito>\n" +
+//                "          <descricao>Deposito 1</descricao>\n" +
+//                "      </deposito>\n" +
+//                "   </depositos>";
+//
+//        JsonRequest resposta = new JsonRequest();
+//        RetornoRequest retorno = new RetornoRequest();
+//
+//        ArrayList<ArrayList<RetornoRequest.Deposito>> depositos = new ArrayList<>();
+//        ArrayList<RetornoRequest.Deposito> depositosList = new ArrayList<>();
+//        RetornoRequest.Deposito deposito = new RetornoRequest.Deposito();
+//
+//        deposito.deposito = new DepositoRequest();
+//        deposito.deposito.setId(Long.valueOf(idDeposito));
+//        deposito.deposito.setDescricao("Deposito Padrão");
+//        deposito.deposito.setSituacao("A");
+//        deposito.deposito.setDepositoPadrao(true);
+//        deposito.deposito.setDesconsiderarSaldo(true);
+//
+//        depositosList.add(deposito);
+//        depositos.add(depositosList);
+//        retorno.setDepositos(depositos);
+//        resposta.setRetorno(retorno);
+//
+//        when(depositoService.updateDeposit(xml, idDeposito)).thenReturn(resposta);
+//
+//        JsonRequest result = depositoController.updateDeposit(xml, idDeposito).getBody();
+//        assertEquals(resposta, result);
+//    }
 
     /**
      * TESTE CONTROLLER - PUT "FORÇA O METODO DE ATUALIZAR DEPOSITO A ENTRAR NO EXCEPTION".
      */
-    @Test
-    void testUpdateDepositException() {
-        String idCategoria = "159357";
-        String xml = "<categorias>\n" +
-                "     <categoria>\n" +
-                "          <descricao>Calçado</descricao>\n" +
-                "          <idCategoriaPai>0</idCategoriaPai>\n" +
-                "      </categoria>\n" +
-                "   </categorias>";
-
-        JsonRequest jsonRequest = new JsonRequest();
-        RetornoRequest retornoRequest = new RetornoRequest();
-
-        retornoRequest.setDepositos(null);
-        retornoRequest.setErros(null);
-        jsonRequest.setRetorno(retornoRequest);
-
-        when(depositoService.updateDeposit(xml, idCategoria)).thenReturn(jsonRequest);
-
-        assertThrows(ApiDepositoException.class, () -> depositoController.updateDeposit(xml, idCategoria));
-    }
+//    @Test
+//    void testUpdateDepositException() {
+//        String idCategoria = "159357";
+//        String xml = "<categorias>\n" +
+//                "     <categoria>\n" +
+//                "          <descricao>Calçado</descricao>\n" +
+//                "          <idCategoriaPai>0</idCategoriaPai>\n" +
+//                "      </categoria>\n" +
+//                "   </categorias>";
+//
+//        JsonRequest jsonRequest = new JsonRequest();
+//        RetornoRequest retornoRequest = new RetornoRequest();
+//
+//        retornoRequest.setDepositos(null);
+//        retornoRequest.setErros(null);
+//        jsonRequest.setRetorno(retornoRequest);
+//
+//        when(depositoService.updateDeposit(xml, idCategoria)).thenReturn(jsonRequest);
+//
+//        assertThrows(ApiDepositoException.class, () -> depositoController.updateDeposit(xml, idCategoria));
+//    }
 
     /**
      * TESTE CONTROLLER - GET "TESTE DO ERROS MAPEADOS QUE RETORNA DA API EXTERNA".

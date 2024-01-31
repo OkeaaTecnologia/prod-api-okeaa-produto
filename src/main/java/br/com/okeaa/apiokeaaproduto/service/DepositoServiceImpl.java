@@ -1,5 +1,6 @@
 package br.com.okeaa.apiokeaaproduto.service;
 
+import br.com.okeaa.apiokeaaproduto.controllers.ProdutoController;
 import br.com.okeaa.apiokeaaproduto.controllers.request.deposito.DepositoRequest;
 import br.com.okeaa.apiokeaaproduto.controllers.request.deposito.JsonRequest;
 import br.com.okeaa.apiokeaaproduto.controllers.response.deposito.DepositoResponse;
@@ -11,9 +12,12 @@ import br.com.okeaa.apiokeaaproduto.repositories.deposito.DepositoResponseReposi
 import br.com.okeaa.apiokeaaproduto.service.deposito.DepositoService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -38,6 +42,8 @@ import java.util.Optional;
 @Service
 public class DepositoServiceImpl implements DepositoService {
 
+    public static final Logger logger = LoggerFactory.getLogger(ProdutoController.class);
+
     @Value("${external.api.url}")
     public String apiBaseUrl;
 
@@ -58,7 +64,7 @@ public class DepositoServiceImpl implements DepositoService {
 
     /**
      * GET "BUSCAR A LISTA DE DEPOSITOS CADASTRADOS NO BLING".
-     * Método responsável por buscar a lista de produtos, tanto na API externa quanto no banco de dados local.
+     * Método responsável por buscar a lista de depositos, tanto na API externa quanto no banco de dados local.
      *
      * @throws ApiDepositoException Caso ocorra algum erro na comunicação com a API externa o banco de dados fica disponivel para a consulta.
      */
@@ -77,10 +83,18 @@ public class DepositoServiceImpl implements DepositoService {
             JsonResponse jsonResponse = objectMapper.readValue(response.getBody(), JsonResponse.class);
 
             // Cria uma lista de Depositos com os valores da API Bling.
+//            List<DepositoResponse> depositos = new ArrayList<>();
+//            for (RetornoResponse.Depositos deposito : jsonResponse.getRetorno().getDepositos()) {
+//                depositos.add(deposito.getDeposito());
+//            }
+
             List<DepositoResponse> depositos = new ArrayList<>();
-            for (RetornoResponse.Depositos deposito : jsonResponse.getRetorno().getDepositos()) {
-                depositos.add(deposito.getDeposito());
+            if (jsonResponse.getRetorno() != null && jsonResponse.getRetorno().getDepositos() != null) {
+                for (RetornoResponse.Depositos deposito : jsonResponse.getRetorno().getDepositos()) {
+                    depositos.add(deposito.getDeposito());
+                }
             }
+
             // Cria uma lista de Depositos de resposta para enviar de volta
             ArrayList<RetornoResponse.Depositos> depositosResponse = new ArrayList<>();
             // Percorre todas os depositos da lista
@@ -185,7 +199,7 @@ public class DepositoServiceImpl implements DepositoService {
                 jsonResponse.getRetorno().getDepositos().add(deposito);
 
                 return jsonResponse;
-                // Se o produto não existir no banco de dados, lança uma exceção ApiProdutoException com a mensagem informando que a API está indisponível e o deposito não foi encontrada no banco de dados.
+                // Se o deposito não existir no banco de dados, lança uma exceção ApiProdutoException com a mensagem informando que a API está indisponível e o deposito não foi encontrada no banco de dados.
             } else {
                 throw new ApiDepositoException("A API está indisponível e o contato não foi encontrado no banco de dados.", e);
             }
@@ -200,7 +214,7 @@ public class DepositoServiceImpl implements DepositoService {
      * @throws ApiDepositoException Caso ocorra algum erro na comunicação com a API externa o banco de dados fica disponivel para a consulta.
      */
     @Override
-    public JsonRequest createDeposit(String xmlDeposito) throws ApiDepositoException {
+    public ResponseEntity<String> createDeposit(String xmlDeposito) throws ApiDepositoException {
         try {
             MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
             map.add("apikey", apiKey);
@@ -216,7 +230,7 @@ public class DepositoServiceImpl implements DepositoService {
             ObjectMapper objectMapper = new ObjectMapper();
             JsonRequest jsonRequest = objectMapper.readValue(responseEntity.getBody(), JsonRequest.class);
 
-            return jsonRequest;
+            return responseEntity;
 
         } catch (RestClientException e) {
             // Em caso de erro ao chamar a API, salva os dados no banco de dados
@@ -240,16 +254,17 @@ public class DepositoServiceImpl implements DepositoService {
 
                 String nomeDeposito = elementoDeposito.getElementsByTagName("descricao").item(0).getTextContent();
                 List<DepositoRequest> depositoExistente = depositoRequestRepository.findByDescricao(nomeDeposito);
-
                 boolean depositoJaExiste = !depositoExistente.isEmpty();
 
                 if (!depositoJaExiste) {
                     depositoRequestRepository.save(depositoRequest);
                 }
+
+                return ResponseEntity.status(HttpStatus.OK).body(""); // Retorna um ResponseEntity vazio com status 200 (OK)
+
             } catch (ParserConfigurationException | SAXException | IOException ex) {
                 throw new ApiDepositoException("Erro ao processar XML: ", ex);
             }
-            throw new ApiDepositoException("Erro ao chamar API", e);
         } catch (JsonProcessingException e) {
             throw new ApiDepositoException("Erro ao processar JSON: ", e);
         }
@@ -264,7 +279,7 @@ public class DepositoServiceImpl implements DepositoService {
      * @throws ApiDepositoException Caso ocorra algum erro na comunicação com a API externa o banco de dados fica disponivel para a consulta.
      */
     @Override
-    public JsonRequest updateDeposit(String xmlDeposito, String idDeposito) throws ApiDepositoException {
+    public ResponseEntity<String> updateDeposit(String xmlDeposito, String idDeposito) throws ApiDepositoException {
         try {
             MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
             map.add("apikey", apiKey);
@@ -276,18 +291,18 @@ public class DepositoServiceImpl implements DepositoService {
             HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(map, headers);
             String url = apiBaseUrl + "/deposito/" + idDeposito + "/json/";
 
-            ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.PUT, request, String.class);
+            ResponseEntity<String> responseEntity = restTemplate.exchange(url, HttpMethod.PUT, request, String.class);
 
             ObjectMapper objectMapper = new ObjectMapper();
-            JsonRequest jsonRequest = objectMapper.readValue(response.getBody(), JsonRequest.class);
+            JsonRequest jsonRequest = objectMapper.readValue(responseEntity.getBody(), JsonRequest.class);
 
-            return jsonRequest;
+            return responseEntity;
 
         } catch (JsonProcessingException e) {
             throw new ApiDepositoException("Erro ao processar JSON", e);
         } catch (RestClientException e) {
             // Caso haja algum erro de conexão ou a API esteja indisponível, tenta atualizar os dados no banco local
-            System.out.println("API externa indisponível. Tentando atualizar os dados no banco local...");
+            logger.info("API Bling Produto [PUT] indisponível, atualizando o deposito no banco de dados");
 
             Optional<DepositoResponse> optionalDeposito = depositoResponseRepository.findById(Long.valueOf(idDeposito));
             if (optionalDeposito.isPresent()) {
@@ -317,7 +332,15 @@ public class DepositoServiceImpl implements DepositoService {
                     depositoRequest.setDepositoPadrao(Boolean.parseBoolean(desconsiderarSaldo));
                     depositoRequest.setFlag("PUT");
 
-                    depositoRequestRepository.save(depositoRequest);
+                    // Verifique se o deposito existe na tabela de DepositoRequest
+                    String descricaoDepositoRequest = doc.getElementsByTagName("descricao").item(0).getTextContent();
+                    List<DepositoRequest> despoitoRequestExistente = depositoRequestRepository.findByDescricao(descricaoDepositoRequest);
+                    boolean depositoRequestExiste = !despoitoRequestExistente.isEmpty();
+                    //Se o deposito não existe na tabela, o mesmo é cadastrado.
+                    if (!depositoRequestExiste) {
+                        logger.info("Produto não encontrado no Banco de dados, adicionando... [PUT]");
+                        depositoRequestRepository.save(depositoRequest);
+                    }
 
                     //Atualiza na tabela tb_deposito_response o deposito atualizado para acesso imediato.
                     DepositoResponse depositoResponse = new DepositoResponse();
@@ -327,12 +350,18 @@ public class DepositoServiceImpl implements DepositoService {
                     depositoResponse.setDepositoPadrao(Boolean.parseBoolean(depositoPadrao));
                     depositoResponse.setDepositoPadrao(Boolean.parseBoolean(desconsiderarSaldo));
 
-                    depositoResponseRepository.save(depositoResponse);
+                    // Verifique se o deposito existe na tabela de ProdutoResponse
+                    String descricaoDepositoResponse = doc.getElementsByTagName("descricao").item(0).getTextContent();
+                    List<DepositoResponse> depositoResponseExistente = depositoResponseRepository.findByDescricao(descricaoDepositoResponse);
+                    boolean depositoResponseExiste = !depositoResponseExistente.isEmpty();
+                    //Se o deposito existe na tabela, o mesmo é atualizado
+                    if (depositoResponseExiste) {
+                        logger.info("Dados atualizados no banco de dados.");
+                        depositoResponseRepository.save(depositoResponse);
+                    }
 
-                    System.out.println("Dados atualizados no banco local.");
+                    return ResponseEntity.status(HttpStatus.CREATED).body(""); // Retorna um ResponseEntity vazio com status 200 (OK)
 
-                    // Retorna um objeto vazio como indicação de que a operação foi concluída com sucesso
-                    return new JsonRequest();
                 } catch (NumberFormatException | ParserConfigurationException | IOException | SAXException ex) {
                     throw new ApiDepositoException("Erro ao processar XML", ex);
                 }
@@ -350,44 +379,55 @@ public class DepositoServiceImpl implements DepositoService {
      *
      * @throws ApiDepositoException Caso ocorra algum erro na comunicação com a API externa o banco de dados fica disponível para a consulta.
      */
-//    @Scheduled(fixedDelayString = "${api.check.delay}")
-//    public void scheduledPostDeposit() {
-//        try {
-//            System.out.println("Chamei o Scheduled POST");
-////            String url = "http://www.teste.com/";
-//            String url = apiBaseUrl + "/depositos/json/" + apikeyparam + apiKey;
-//            ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
-//
-//            if (response.getStatusCode() == HttpStatus.OK) {
-//                List<DepositoRequest> depositos = depositoRequestRepository.findAll();
-//                List<String> descricaoDepositos = depositoResponseRepository.findAllDescricao();
-//
-//                for (DepositoRequest deposito : depositos) {
-//                    if (deposito.getFlag() != null && deposito.getFlag().equals("POST")) {
-//                        if (!descricaoDepositos.contains(deposito.getDescricao())) {
-//                            System.out.println("Deposito não encontrado na API, adicionando...");
-//                            String xmlDeposito = "<depositos>";
-//                            xmlDeposito += "<deposito>";
-//                            xmlDeposito += "<descricao>" + deposito.getDescricao() + "</descricao>";
-//                            xmlDeposito += "<situacao>" + deposito.getSituacao() + "</situacao>";
-//                            xmlDeposito += "<depositoPadrao>" + deposito.depositoPadrao + "</depositoPadrao>";
-//                            xmlDeposito += "<desconsiderarSaldo>" + deposito.desconsiderarSaldo + "</desconsiderarSaldo>";
-//                            xmlDeposito += "</deposito>";
-//                            xmlDeposito += "</depositos>";
-//
-//                            createDeposit(xmlDeposito);
-//                            depositoRequestRepository.delete(deposito);
-//                        } else {
-//                            System.out.println("Depositos já existe na API, deletando...");
-//                            depositoRequestRepository.delete(deposito);
-//                        }
-//                    }
-//                }
-//            }
-//        } catch (RestClientException e) {
-//            System.out.println("API está offline, nada a fazer");
-//        }
-//    }
+    @Scheduled(fixedDelayString = "${api.check.delay}")
+    public void scheduledPostDeposit() {
+        try {
+            logger.info("---------- Scheduled POST Deposito ----------");
+//            String url = "http://www.teste.com/";
+            String url = apiBaseUrl + "/depositos/json/" + apikeyparam + apiKey;
+            ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
+
+            if (response.getStatusCode() == HttpStatus.OK) {
+                List<DepositoRequest> depositos = depositoRequestRepository.findAll();
+                List<String> descricaoDepositos = depositoResponseRepository.findAllDescricao();
+
+                if (depositos.isEmpty()) {
+                    logger.info("Não há depositos no banco de dados para atualizar no Bling");
+                    logger.info("--------------------------------------------");
+                } else {
+                    for (DepositoRequest deposito : depositos) {
+                        if (deposito.getFlag() != null && deposito.getFlag().equals("POST")) {
+                            if (!descricaoDepositos.contains(deposito.getDescricao())) {
+                                System.out.println("Deposito não encontrado na API, adicionando...");
+                                String xmlDeposito = "<depositos>";
+                                xmlDeposito += "<deposito>";
+                                xmlDeposito += "<descricao>" + deposito.getDescricao() + "</descricao>";
+                                xmlDeposito += "<situacao>" + deposito.getSituacao() + "</situacao>";
+                                xmlDeposito += "<depositoPadrao>" + deposito.depositoPadrao + "</depositoPadrao>";
+                                xmlDeposito += "<desconsiderarSaldo>" + deposito.desconsiderarSaldo + "</desconsiderarSaldo>";
+                                xmlDeposito += "</deposito>";
+                                xmlDeposito += "</depositos>";
+
+                                ResponseEntity<String> createResponse = createDeposit(xmlDeposito);
+
+                                if (createResponse.getStatusCode() == HttpStatus.CREATED) {
+                                    depositoRequestRepository.delete(deposito);
+                                }
+                                logger.info("--------------------------------------------");
+                            } else {
+                                System.out.println("Depositos já existe no banco de dados, deletando...");
+                                depositoRequestRepository.delete(deposito);
+                            }
+                        }
+                    }
+                }
+            } else {
+                logger.info(" ERRO na função scheduledPostDeposit [POST]");
+            }
+        } catch (RestClientException e) {
+            System.out.println("API está offline, nada a fazer");
+        }
+    }
 
     /**
      * Verifica o status da API externa e atualiza o banco de dados local com os depositos cadastradas na API.
@@ -397,41 +437,50 @@ public class DepositoServiceImpl implements DepositoService {
      *
      * @throws ApiDepositoException Caso ocorra algum erro na comunicação com a API externa o banco de dados fica disponível para a consulta.
      */
-//    @Scheduled(fixedDelayString = "${api.check.delay}")
-//    public void scheduledUpdateDeposit() {
-//        try {
-//            System.out.println("Chamei o Scheduled PUT");
-////            String url = "http://www.teste.com/";
-//            String url = apiBaseUrl + "/depositos/json/" + apikeyparam + apiKey;
-//            ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
-//
-//            if (response.getStatusCode() == HttpStatus.OK) {
-//                List<DepositoRequest> depositoRequests = depositoRequestRepository.findAll();
-//
-//                for (DepositoRequest depositoRequest : depositoRequests) {
-//                    if ("PUT".equals(depositoRequest.getFlag())) { // verifica se a flag é "PUT"
-//                        String xmlDeposito = "<depositos>";
-//                        xmlDeposito += "<deposito>";
-//                        xmlDeposito += "<descricao>" + depositoRequest.getDescricao() + "</descricao>";
-//                        xmlDeposito += "<situacao>" + depositoRequest.getSituacao() + "</situacao>";
-//                        xmlDeposito += "<depositoPadrao>" + depositoRequest.depositoPadrao + "</depositoPadrao>";
-//                        xmlDeposito += "<desconsiderarSaldo>" + depositoRequest.desconsiderarSaldo + "</desconsiderarSaldo>";
-//                        xmlDeposito += "</deposito>";
-//                        xmlDeposito += "</depositos>";
-//
-//                        String idDeposito = String.valueOf(depositoRequest.getId());
-//
-//                        updateDeposit(xmlDeposito, idDeposito);
-//
-//                        System.out.println("Depositos já existe na API, deletando...");
-//                        depositoRequestRepository.delete(depositoRequest);
-//                    }
-//                }
-//            }
-//        } catch (RestClientException e) {
-//            System.out.println("API está offline, nada a fazer");
-//        }
-//    }
+    @Scheduled(fixedDelayString = "${api.check.delay}")
+    public void scheduledUpdateDeposit() {
+        try {
+            logger.info("---------- Scheduled PUT Deposito -----------");
+//            String url = "http://www.teste.com/";
+            String url = apiBaseUrl + "/depositos/json/" + apikeyparam + apiKey;
+            ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
+
+            if (response.getStatusCode() == HttpStatus.OK) {
+                List<DepositoRequest> depositoRequests = depositoRequestRepository.findAll();
+
+                if (depositoRequests.isEmpty()) {
+                    logger.info("Não há depositos no banco de dados para atualizar no Bling");
+                    logger.info("--------------------------------------------");
+                } else {
+                    for (DepositoRequest depositoRequest : depositoRequests) {
+                        if ("PUT".equals(depositoRequest.getFlag())) { // verifica se a flag é "PUT"
+                            String xmlDeposito = "<depositos>";
+                            xmlDeposito += "<deposito>";
+                            xmlDeposito += "<descricao>" + depositoRequest.getDescricao() + "</descricao>";
+                            xmlDeposito += "<situacao>" + depositoRequest.getSituacao() + "</situacao>";
+                            xmlDeposito += "<depositoPadrao>" + depositoRequest.depositoPadrao + "</depositoPadrao>";
+                            xmlDeposito += "<desconsiderarSaldo>" + depositoRequest.desconsiderarSaldo + "</desconsiderarSaldo>";
+                            xmlDeposito += "</deposito>";
+                            xmlDeposito += "</depositos>";
+
+                            String idDeposito = String.valueOf(depositoRequest.getId());
+
+                            ResponseEntity<String> createResponse = updateDeposit(xmlDeposito, idDeposito);
+
+                            if (createResponse.getStatusCode() == HttpStatus.OK) {
+                                depositoRequestRepository.delete(depositoRequest);
+                            }
+                            logger.info("--------------------------------------------");
+                        }
+                    }
+                }
+            } else {
+                logger.info("ERRO na função scheduledUpdateProduct [PUT]");
+            }
+        } catch (RestClientException e) {
+            System.out.println("API está offline, nada a fazer");
+        }
+    }
 
     /*
      * ---------------------------------------------------- VERSÃO 1 - SEM CONEXÃO AO BANCO DE DADOS. ----------------------------------------------------------

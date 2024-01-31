@@ -1,18 +1,24 @@
 package br.com.okeaa.apiokeaaproduto.controllers;
 
-import br.com.okeaa.apiokeaaproduto.controllers.request.produto.JsonRequest;
 import br.com.okeaa.apiokeaaproduto.controllers.response.produto.JsonResponse;
-import br.com.okeaa.apiokeaaproduto.exceptions.produto.*;
+import br.com.okeaa.apiokeaaproduto.exceptions.produto.ApiProdutoException;
+import br.com.okeaa.apiokeaaproduto.exceptions.produto.ProdutoCodigoException;
+import br.com.okeaa.apiokeaaproduto.exceptions.produto.ProdutoCodigoFornecedorException;
+import br.com.okeaa.apiokeaaproduto.exceptions.produto.ProdutoExclusaoException;
 import br.com.okeaa.apiokeaaproduto.service.produto.ProdutoService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 
 import javax.validation.Valid;
+import java.util.concurrent.CompletableFuture;
 
 
 @RestController
@@ -21,31 +27,62 @@ import javax.validation.Valid;
 @CrossOrigin(origins = "*")        // Liberar os dominios da API
 public class ProdutoController {
 
+    public static final Logger logger = LoggerFactory.getLogger(ProdutoController.class);
+
     @Autowired
-    private RestTemplate restTemplate;
+    public RestTemplate restTemplate;
     @Autowired
-    private ProdutoService produtoService;
-    private String codigo;
+    public ProdutoService produtoService;
+
+    public String codigo;
 
     /**
      * GET "BUSCAR LISTA DE PRODUTOS".
      */
-    @GetMapping("/produtos")
-    @ApiOperation(value = "Retorna uma lista de produtos")
-    public ResponseEntity<JsonResponse> getAllProducts() {
+//    @GetMapping("/produtos/page={pagina}")
+//    @ApiOperation(value = "Retorna uma lista de produtos")
+//    public ResponseEntity<JsonResponse> getAllProducts(@PathVariable int pagina) {
+//        try {
+//            JsonResponse request = produtoService.getAllProducts(pagina);
+//
+//            logger.info("GET: " + request);
+//
+//            return ResponseEntity.status(HttpStatus.OK).body(request);
+//
+//        } catch (Exception e) {
+//            throw new ApiProdutoException("Houve algum erro sistemico, tente novamente", e);
+//        }
+//    }
+
+    @GetMapping("/produtos/page={pagina}")
+    @ApiOperation(value = "Retorna uma lista de contatos")
+    public CompletableFuture<JsonResponse> getAllProducts(@PathVariable int pagina) {
         try {
-            JsonResponse request = produtoService.getAllProducts();
+            CompletableFuture<JsonResponse> request = produtoService.getAllProducts(pagina);
 
-            if (request.retorno.produtos == null && request.retorno.erros == null) {
-                throw new ProdutoListaException("Não foi possível localizar a lista de produtos");
-            }
+            logger.info("GET: " + request);
 
-            System.out.println("GET: " + request);
-
-            return ResponseEntity.ok(request);
-
+            return ResponseEntity.status(HttpStatus.OK).body(request).getBody();
         } catch (Exception e) {
-            throw new ApiProdutoException("Houve algum erro sistemico, tente novamente", e);
+            throw new ApiProdutoException("Houve algum erro sistêmico, tente novamente", e);
+        }
+    }
+
+    @GetMapping("/produtos")
+    @ApiOperation(value = "Retorna uma lista de contatos")
+    public ResponseEntity<JsonResponse> getListContacts(
+            @RequestParam(required = false) String descricao,
+            @RequestParam(required = false) String codigo,
+            @RequestParam(required = false) String gtin
+    ) {
+        try {
+            JsonResponse request = produtoService.getListProducts(descricao, codigo, gtin);
+
+            logger.info("GET: " + request);
+
+            return ResponseEntity.status(HttpStatus.OK).body(request);
+        } catch (Exception e) {
+            throw new ApiProdutoException("Houve algum erro sistêmico, tente novamente", e);
         }
     }
 
@@ -62,7 +99,7 @@ public class ProdutoController {
                 throw new ProdutoCodigoException("Produto com código " + codigo + " não localizado.");
             }
 
-            System.out.println("GET ID: " + request);
+            logger.info("GET ID: " + request);
 
             return ResponseEntity.ok(request);
 
@@ -84,7 +121,7 @@ public class ProdutoController {
                 throw new ProdutoCodigoFornecedorException("Produto com código: " + codigoFabricante + " e idFabricante: " + idFabricante + " não localizado.");
             }
 
-            System.out.println("GET ID+FAB: " + request);
+            logger.info("GET ID+FAB: " + request);
 
             return ResponseEntity.ok(request);
 
@@ -107,7 +144,7 @@ public class ProdutoController {
             }
             produtoService.deleteProductByCode(codigo);
 
-            System.out.println("Codigo deletado = " + codigo);
+            logger.info("Codigo deletado = " + codigo);
 
             return ResponseEntity.ok(request);
 
@@ -121,15 +158,11 @@ public class ProdutoController {
      */
     @PostMapping(path = "/cadastrarproduto", consumes = MediaType.APPLICATION_XML_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Cadastrar um novo produto")
-    public ResponseEntity<JsonRequest> createProduct(@RequestBody @Valid String xmlProdutos) {
+    public ResponseEntity<String> createProduct(@RequestBody @Valid String xmlProdutos) {
         try {
-            JsonRequest request = produtoService.createProduct(xmlProdutos);
+            String request = produtoService.createProduct(xmlProdutos).getBody();
 
-            if (request.retorno.produtos == null && request.retorno.erros == null) {
-                throw new ProdutoCadastroException("Cadastro não efetuado, revise os campos e tente novamente!");
-            }
-
-            System.out.println("POST: " + request);
+            logger.info("POST: " + request);
 
             return ResponseEntity.ok(request);
 
@@ -143,15 +176,11 @@ public class ProdutoController {
      */
     @PostMapping(path = "/atualizarproduto/{codigo}", consumes = MediaType.APPLICATION_XML_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Atualizar um produto existente")
-    public ResponseEntity<JsonRequest> updateProduct(@RequestBody @Valid String xml, @PathVariable String codigo) {
+    public ResponseEntity<String> updateProduct(@RequestBody @Valid String xml, @PathVariable String codigo) {
         try {
-            JsonRequest request = produtoService.updateProduct(xml, codigo);
+            String request = produtoService.updateProduct(xml, codigo).getBody();
 
-            if (request.retorno.produtos == null && request.retorno.erros == null) {
-                throw new ProdutoAtualizarException("Não foi possível atualizar a categoria pelo código: " + codigo);
-            }
-
-            System.out.println("UPDATE: " + request);
+            logger.info("UPDATE: " + request);
 
             return ResponseEntity.ok(request);
 

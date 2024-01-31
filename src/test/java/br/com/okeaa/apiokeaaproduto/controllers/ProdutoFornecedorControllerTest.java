@@ -1,6 +1,6 @@
 package br.com.okeaa.apiokeaaproduto.controllers;
 
-import br.com.okeaa.apiokeaaproduto.service.produtofornecedor.ProdutoFornecedorService;
+import br.com.okeaa.apiokeaaproduto.service.produtoFornecedor.ProdutoFornecedorService;
 import org.junit.jupiter.api.BeforeEach;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;

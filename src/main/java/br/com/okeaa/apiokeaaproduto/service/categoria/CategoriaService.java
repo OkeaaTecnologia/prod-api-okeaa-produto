@@ -1,7 +1,7 @@
 package br.com.okeaa.apiokeaaproduto.service.categoria;
 
-import br.com.okeaa.apiokeaaproduto.controllers.request.categoria.JsonRequest;
 import br.com.okeaa.apiokeaaproduto.controllers.response.categoria.JsonResponse;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.xml.sax.SAXException;
@@ -15,7 +15,7 @@ public interface CategoriaService {
 
     JsonResponse getCategoryByIdCategoria(@PathVariable("idCategoria") String idCategoria);
 
-    JsonRequest createCategory(@RequestBody String xmlCategoria);
+    ResponseEntity<String> createCategory(@RequestBody String xmlCategoria);
 
-    JsonRequest updateCategory(@RequestBody String xmlCategoria, @PathVariable("idCategoria") String idCategoria) throws ParserConfigurationException, IOException, SAXException;
+    ResponseEntity<String> updateCategory(@RequestBody String xmlCategoria, @PathVariable("idCategoria") String idCategoria) throws ParserConfigurationException, IOException, SAXException;
 }

@@ -17,7 +17,6 @@ import java.util.List;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class RetornoRequest {
 
-
     @JsonFormat(with = JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
     @JsonProperty("produtos")
     public ArrayList<Produtos> produtos;

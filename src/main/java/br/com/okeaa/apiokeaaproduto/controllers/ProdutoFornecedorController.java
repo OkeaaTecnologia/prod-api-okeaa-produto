@@ -1,13 +1,13 @@
 package br.com.okeaa.apiokeaaproduto.controllers;
 
-import br.com.okeaa.apiokeaaproduto.controllers.request.produtofornecedor.JsonRequest;
-import br.com.okeaa.apiokeaaproduto.controllers.response.produtofornecedor.FornecedoresResponse;
-import br.com.okeaa.apiokeaaproduto.controllers.response.produtofornecedor.JsonResponse;
-import br.com.okeaa.apiokeaaproduto.controllers.response.produtofornecedor.RetornoResponse;
-import br.com.okeaa.apiokeaaproduto.exceptions.produtofornecedor.*;
-import br.com.okeaa.apiokeaaproduto.service.produtofornecedor.ProdutoFornecedorService;
+import br.com.okeaa.apiokeaaproduto.controllers.request.produtoFornecedor.JsonRequest;
+import br.com.okeaa.apiokeaaproduto.controllers.response.produtoFornecedor.JsonResponse;
+import br.com.okeaa.apiokeaaproduto.exceptions.produtoFornecedor.*;
+import br.com.okeaa.apiokeaaproduto.service.produtoFornecedor.ProdutoFornecedorService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -21,8 +21,10 @@ import org.springframework.web.bind.annotation.*;
 @CrossOrigin(origins = "*")                         //Liberar os dominios da API
 public class ProdutoFornecedorController {
 
+    public static final Logger logger = LoggerFactory.getLogger(ProdutoController.class);
+
     @Autowired
-    private ProdutoFornecedorService produtoFornecedorService;
+    public ProdutoFornecedorService produtoFornecedorService;
 
     /**
      * GET "BUSCAR LISTA DE PRODUTOS FORNECEDORES".
@@ -37,27 +39,7 @@ public class ProdutoFornecedorController {
                 throw new ProdutoFornecedorListaException("Não foi possível localizar a lista de produto fornecedor");
             }
 
-            if (request.retorno.produtosfornecedores != null) {
-                for (RetornoResponse.Produtosfornecedores listaProdutoFornecedor : request.getRetorno().getProdutosfornecedores()) {
-                    System.out.println("-----------------------------------------------------------------------------------");
-                    System.out.println("Id Produto: " + listaProdutoFornecedor.produtofornecedores.idProduto);
-                    System.out.println("-----------------------------------------------------------------------------------");
-
-                    for (FornecedoresResponse fornecedor : listaProdutoFornecedor.produtofornecedores.fornecedores) {
-                        System.out.println("idProdutoFornecedor: " + fornecedor.produtoFornecedor.idProdutoFornecedor);
-                        System.out.println("idFornecedor " + fornecedor.produtoFornecedor.idFornecedor);
-                        System.out.println("produtoDescricao: " + fornecedor.produtoFornecedor.produtoDescricao);
-                        System.out.println("produtoCodigo: " + fornecedor.produtoFornecedor.produtoCodigo);
-                        System.out.println("precoCompra: " + fornecedor.produtoFornecedor.precoCompra);
-                        System.out.println("precoCusto: " + fornecedor.produtoFornecedor.precoCusto);
-                        System.out.println("produtoGarantia : " + fornecedor.produtoFornecedor.produtoGarantia);
-                        System.out.println("padrao: " + fornecedor.produtoFornecedor.padrao);
-                        System.out.println("-----------------------------------------------------------------------------------");
-                    }
-                }
-            }
-
-            System.out.println(request);
+            logger.info("GET: " + request);
 
             return ResponseEntity.status(HttpStatus.OK).body(request);
         } catch (Exception e) {
@@ -68,7 +50,7 @@ public class ProdutoFornecedorController {
     /**
      * GET "BUSCAR UM PRODUTO FORNECEDOR PELO IDPRODUTOFORNECEDOR".
      */
-    @GetMapping("/produtosfornecedores/{idProdutoFornecedor}")
+    @GetMapping("/produtofornecedor/{idProdutoFornecedor}")
     @ApiOperation(value = "Retorna um produto fornecedor pelo idProdutoFornecedor")
     public ResponseEntity<JsonResponse> getProducId(@PathVariable String idProdutoFornecedor) {
         try {
@@ -78,27 +60,7 @@ public class ProdutoFornecedorController {
                 throw new ProdutoFornecedorIdException("Não foi possível localizar o produto fornecedor pelo Id: " + idProdutoFornecedor);
             }
 
-            if (request.retorno.produtosfornecedores != null) {
-                for (RetornoResponse.Produtosfornecedores listaProdutoFornecedor : request.getRetorno().getProdutosfornecedores()) {
-                    System.out.println("-----------------------------------------------------------------------------------");
-                    System.out.println("Id Produto: " + listaProdutoFornecedor.produtofornecedores.idProduto);
-                    System.out.println("-----------------------------------------------------------------------------------");
-
-                    for (FornecedoresResponse fornecedor : listaProdutoFornecedor.produtofornecedores.fornecedores) {
-                        System.out.println("idProdutoFornecedor: " + fornecedor.produtoFornecedor.idProdutoFornecedor);
-                        System.out.println("idFornecedor " + fornecedor.produtoFornecedor.idFornecedor);
-                        System.out.println("produtoDescricao: " + fornecedor.produtoFornecedor.produtoDescricao);
-                        System.out.println("produtoCodigo: " + fornecedor.produtoFornecedor.produtoCodigo);
-                        System.out.println("precoCompra: " + fornecedor.produtoFornecedor.precoCompra);
-                        System.out.println("precoCusto: " + fornecedor.produtoFornecedor.precoCusto);
-                        System.out.println("produtoGarantia : " + fornecedor.produtoFornecedor.produtoGarantia);
-                        System.out.println("padrao: " + fornecedor.produtoFornecedor.padrao);
-                        System.out.println("-----------------------------------------------------------------------------------");
-                    }
-                }
-            }
-
-            System.out.println(request);
+            logger.info("GET ID: " + request);
 
             return ResponseEntity.status(HttpStatus.OK).body(request);
         } catch (Exception e) {
@@ -119,7 +81,7 @@ public class ProdutoFornecedorController {
                 throw new ProdutoFornecedorCadastroException("Cadastro não efetuado, revise os campos e tente novamente!");
             }
 
-            System.out.println(request);
+            logger.info("POST: " + request);
 
             return ResponseEntity.status(HttpStatus.OK).body(request);
 
@@ -141,7 +103,7 @@ public class ProdutoFornecedorController {
                 throw new ProdutoFornecedorAtualizarException("Não foi possível atualizar o produto fornecedor pelo Id: " + idProdutoFornecedor);
             }
 
-            System.out.println(request);
+            logger.info("UPDATE: " + request);
 
             return ResponseEntity.status(HttpStatus.OK).body(request);
 

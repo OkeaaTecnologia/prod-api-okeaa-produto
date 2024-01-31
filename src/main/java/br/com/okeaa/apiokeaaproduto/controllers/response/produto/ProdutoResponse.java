@@ -1,22 +1,24 @@
 package br.com.okeaa.apiokeaaproduto.controllers.response.produto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.persistence.*;
+import java.math.BigDecimal;
+
 @Data
 @NoArgsConstructor
-//@Entity
-//@Table(name = "TB_PRODUTO_RESPONSE")
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@Entity
+@Table(name = "TB_PRODUTO_RESPONSE")
+//@JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ProdutoResponse {
 
-//    @Id
+    @Id
     @JsonProperty("id")
-    private Long id;
+    public Long id;
 
     @JsonProperty("codigo")
     public String codigo;
@@ -96,8 +98,10 @@ public class ProdutoResponse {
     @JsonProperty("idFabricante")
     public String idFabricante;
 
-//    @JsonProperty("categoria")
-//    public CategoriaResponse categoria;
+    @ManyToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "categoria_id")
+    @JsonProperty("categoria")
+    public ProdutoCategoriaResponse categoria;
 
     @JsonProperty("pesoLiq")
     public String pesoLiq;
@@ -155,6 +159,67 @@ public class ProdutoResponse {
 
     @JsonProperty("spedTipoItem")
     public String spedTipoItem;
+
+    // Propriedade adicional "Valor do desconto".
+    @JsonProperty("precoDescontoLista")
+    public BigDecimal precoDescontoLista;
+
+    // Propriedade adicional "Nome da lista de desconto".
+    @JsonProperty("listaDesconto")
+    public String listaDesconto;
+
+    @Override
+    public String toString() {
+        return "ProdutoResponse{" +
+                "id='" + id + '\'' +
+                ", codigo='" + codigo + '\'' +
+                ", descricao='" + descricao + '\'' +
+                ", tipo='" + tipo + '\'' +
+                ", situacao='" + situacao + '\'' +
+                ", unidade='" + unidade + '\'' +
+                ", preco='" + preco + '\'' +
+                ", precoCusto='" + precoCusto + '\'' +
+                ", descricaoCurta='" + descricaoCurta + '\'' +
+                ", descricaoComplementar='" + descricaoComplementar + '\'' +
+                ", dataInclusao='" + dataInclusao + '\'' +
+                ", dataAlteracao='" + dataAlteracao + '\'' +
+                ", imageThumbnail='" + imageThumbnail + '\'' +
+                ", urlVideo='" + urlVideo + '\'' +
+                ", nomeFornecedor='" + nomeFornecedor + '\'' +
+                ", codigoFabricante='" + codigoFabricante + '\'' +
+                ", marca='" + marca + '\'' +
+                ", class_fiscal='" + class_fiscal + '\'' +
+                ", cest='" + cest + '\'' +
+                ", origem='" + origem + '\'' +
+                ", idGrupoProduto='" + idGrupoProduto + '\'' +
+                ", linkExterno='" + linkExterno + '\'' +
+                ", observacoes='" + observacoes + '\'' +
+                ", grupoProduto='" + grupoProduto + '\'' +
+                ", garantia='" + garantia + '\'' +
+                ", descricaoFornecedor='" + descricaoFornecedor + '\'' +
+                ", idFabricante='" + idFabricante + '\'' +
+                ", categoria=" + (categoria != null ? categoria.getId() : null) +
+                ", pesoLiq='" + pesoLiq + '\'' +
+                ", pesoBruto='" + pesoBruto + '\'' +
+                ", estoqueMinimo='" + estoqueMinimo + '\'' +
+                ", estoqueMaximo='" + estoqueMaximo + '\'' +
+                ", gtin='" + gtin + '\'' +
+                ", gtinEmbalagem='" + gtinEmbalagem + '\'' +
+                ", larguraProduto='" + larguraProduto + '\'' +
+                ", alturaProduto='" + alturaProduto + '\'' +
+                ", profundidadeProduto='" + profundidadeProduto + '\'' +
+                ", unidadeMedida='" + unidadeMedida + '\'' +
+                ", itensPorCaixa=" + itensPorCaixa +
+                ", volumes=" + volumes +
+                ", localizacao='" + localizacao + '\'' +
+                ", crossdocking='" + crossdocking + '\'' +
+                ", condicao='" + condicao + '\'' +
+                ", freteGratis='" + freteGratis + '\'' +
+                ", producao='" + producao + '\'' +
+                ", dataValidade='" + dataValidade + '\'' +
+                ", spedTipoItem='" + spedTipoItem + '\'' +
+                ", precoDescontoLista=" + precoDescontoLista +
+                ", listaDesconto='" + listaDesconto + '\'' +
+                '}';
+    }
 }
-
-
